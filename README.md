@@ -76,6 +76,7 @@
   ENTRYPOINT nohup code-server --bind-addr 0.0.0.0:8080 --auth password  ${WORKDIR}
   ###
   ```
+- docker vscode 추가 내용은 (https://github.com/SagiK-Repository/Docker_VSCode/blob/main/README.md)를 참고했습니다.
 - `update_git_repo.sh` 구성
   ```bash
   # Git 저장소 클론 또는 업데이트
