@@ -28,8 +28,8 @@
 
 - dockerfile 내용
   ```dockerfile
-  # 기반이 될 이미지 선택
-  FROM tensorflow/tensorflow:latest-gpu
+  # 기반이 될 이미지 선택 (이름 획득 : https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tensorflow)
+  FROM nvcr.io/nvidia/tensorflow:23.08-tf2-py3
   
   # 필요한 패키지 설치, cache 비우기
   RUN apt-get update && \
