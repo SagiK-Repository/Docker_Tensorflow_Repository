@@ -91,6 +91,6 @@
   ```
 - 다음과 같이 docker를 준비합니다.
   ```bash
-  docker build -t tensorflow_gpu_vscode_gitreop_image .
-  docker run --gpus all --name tensorflow_gpu_vscode_gitreop -p 18081:8080 tensorflow_gpu_vscode_gitreop_image:latest 
+  docker build -t tensorflow_gpu_vscode_gitrepo_iamge .
+  docker run --gpus all --name tensorflow_gpu_vscode_gitrepo -p 18081:8080 tensorflow_gpu_vscode_gitrepo_iamge:latest 
   ```
