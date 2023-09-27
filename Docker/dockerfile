@@ -1,0 +1,47 @@
+# 기반이 될 이미지 선택
+FROM tensorflow/tensorflow:latest-gpu
+
+# 필요한 패키지 설치, cache 비우기
+RUN apt-get update && \
+    apt-get install -y curl sudo && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+### Git
+# Git 설치
+RUN apt-get update && apt-get install -y git
+
+# 작업 디렉토리 설정
+WORKDIR /app
+
+# Git 저장소 업데이트 스크립트 추가
+COPY update_git_repo.sh /app/update_git_repo.sh
+
+# 스크립트 실행 권한 부여
+RUN chmod +x /app/update_git_repo.sh
+
+# 컨테이너 실행 시 스크립트 자동 실행 설정
+CMD ["/app/update_git_repo.sh"]
+
+ENV WORKDIR="/app/git_repository"
+###
+
+### VSCode
+# 새로운 사용자 생성 및 비밀번호 설정
+ENV USER="user" \
+    PASSWORD="password"
+RUN useradd -m ${USER} && echo "${USER}:${PASSWORD}" | chpasswd && adduser ${USER} sudo && \
+    sed -i "/^root/ c\root:!:18291:0:99999:7:::" /etc/shadow
+
+# code-server 설치 및 세팅
+ENV WORKINGDIR="/home/${USER}/vscode"
+RUN curl -fsSL https://code-server.dev/install.sh | sh && \
+    mkdir ${WORKINGDIR} && \
+    su ${USER} -c "code-server --install-extension ms-python.python \
+                               --install-extension ms-azuretools.vscode-docker" && \
+    rm -rf ${WORKINGDIR}/.local ${WORKINGDIR}/.cache
+
+# code-server 시작
+USER ${USER}
+ENTRYPOINT nohup code-server --bind-addr 0.0.0.0:8080 --auth password  ${WORKDIR}
+###
