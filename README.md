@@ -28,8 +28,8 @@
 
 - dockerfile 내용
   ```dockerfile
-  # 기반이 될 이미지 선택
-  FROM tensorflow/tensorflow:latest-gpu
+  # 기반이 될 이미지 선택 (이름 획득 : https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tensorflow)
+  FROM nvcr.io/nvidia/tensorflow:23.08-tf2-py3
   
   # 필요한 패키지 설치, cache 비우기
   RUN apt-get update && \
@@ -93,4 +93,24 @@
   ```bash
   docker build -t tensorflow_gpu_vscode_gitrepo_iamge .
   docker run --gpus all --name tensorflow_gpu_vscode_gitrepo -p 18081:8080 tensorflow_gpu_vscode_gitrepo_iamge:latest 
+  ```
+
+### Nvidia Tool kit 설치
+- 만일 위 과정에서 다음과 같은 에러가 나타났다면, 아래를 따릅니다. (Window에 경우 Ubuntu 또는 WSL에 접근해서 실행합니다)
+  ```log
+  docker run --gpus all --name tensorflow_gpu_vscode_gitrepo -p 18081:8080 juhyung1021/tensorflow_gpu_vscode_gitrepo_images:latest
+  docker: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: error running hook #0: error running hook: exit status 1, stdout: , stderr: Auto-detected mode as 'legacy'
+  nvidia-container-cli: requirement error: unsatisfied condition: cuda>=11.8, please update your driver to a newer version, or use an earlier cuda container: unknown.
+  ```
+- [Enabling the Docker Repository and Installing the NVIDIA Container Toolkit](https://docs.nvidia.com/ai-enterprise/deployment-guide-vmware/0.1.0/docker.html#enabling-the-docker-repository-and-installing-the-nvidia-container-toolkit)의 과정을 따릅니다.  
+  ```bash
+  distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+  curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
+  curl -s -L https://nvidia.github.io/libnvidia-container/$distribution/libnvidia-container.list | \
+       sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+       sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+  ```
+  ```bash
+  sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
+  sudo systemctl restart docker
   ```
