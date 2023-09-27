@@ -31,6 +31,13 @@
   # 기반이 될 이미지 선택
   FROM tensorflow/tensorflow:latest-gpu
   
+  # 필요한 패키지 설치, cache 비우기
+  RUN apt-get update && \
+      apt-get install -y curl sudo && \
+      apt-get clean && \
+      rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+  
+  ### Git
   # Git 설치
   RUN apt-get update && apt-get install -y git
   
@@ -45,17 +52,40 @@
   
   # 컨테이너 실행 시 스크립트 자동 실행 설정
   CMD ["/app/update_git_repo.sh"]
+  
+  ENV WORKDIR="/app/git_repository"
+  ###
+  
+  ### VSCode
+  # 새로운 사용자 생성 및 비밀번호 설정
+  ENV USER="user" \
+      PASSWORD="password"
+  RUN useradd -m ${USER} && echo "${USER}:${PASSWORD}" | chpasswd && adduser ${USER} sudo && \
+      sed -i "/^root/ c\root:!:18291:0:99999:7:::" /etc/shadow
+  
+  # code-server 설치 및 세팅
+  ENV WORKINGDIR="/home/${USER}/vscode"
+  RUN curl -fsSL https://code-server.dev/install.sh | sh && \
+      mkdir ${WORKINGDIR} && \
+      su ${USER} -c "code-server --install-extension ms-python.python \
+                                 --install-extension ms-azuretools.vscode-docker" && \
+      rm -rf ${WORKINGDIR}/.local ${WORKINGDIR}/.cache
+  
+  # code-server 시작
+  USER ${USER}
+  ENTRYPOINT nohup code-server --bind-addr 0.0.0.0:8080 --auth password  ${WORKDIR}
+  ###
   ```
 - `update_git_repo.sh` 구성
   ```bash
   # Git 저장소 클론 또는 업데이트
-  if [ -d "/path/to/your/git/repository" ]; then
+  if [ -d "/app/git_repository" ]; then
     # 이미 저장소가 존재하는 경우, Pull 수행
-    cd /path/to/your/git/repository
+    cd /app/git_repository
     git pull origin master
   else
     # 저장소가 없는 경우, 클론 수행
-    git clone https://github.com/yourusername/yourrepository.git /path/to/your/git/repository
+    git clone https://github.com/yourusername/yourrepository.git /app/git_repository
   fi
   ```
 - 다음과 같이 docker를 준비합니다.
