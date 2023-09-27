@@ -85,7 +85,7 @@
     git pull origin master
   else
     # 저장소가 없는 경우, 클론 수행
-    git clone https://github.com/yourusername/yourrepository.git /app/git_repository
+    git clone https://github.com/SagiK-Repository/Docker_Tensorflow_Repository.git /app/git_repository
   fi
   ```
 - 다음과 같이 docker를 준비합니다.
