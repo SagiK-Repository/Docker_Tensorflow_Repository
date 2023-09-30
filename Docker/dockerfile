@@ -9,7 +9,9 @@ RUN apt-get update && \
 
 ### Git
 # Git 설치
-RUN apt-get update && apt-get install -y git
+RUN apt-get install -y git
+
+ENV WORKDIR="/app/git_repository"
 
 # 작업 디렉토리 설정
 WORKDIR /app
@@ -22,8 +24,6 @@ RUN chmod +x /app/update_git_repo.sh
 
 # 컨테이너 실행 시 스크립트 자동 실행 설정
 CMD ["/app/update_git_repo.sh"]
-
-ENV WORKDIR="/app/git_repository"
 ###
 
 ### VSCode
@@ -40,8 +40,8 @@ RUN curl -fsSL https://code-server.dev/install.sh | sh && \
     su ${USER} -c "code-server --install-extension ms-python.python \
                                --install-extension ms-azuretools.vscode-docker" && \
     rm -rf ${WORKINGDIR}/.local ${WORKINGDIR}/.cache
+###
 
 # code-server 시작
 USER ${USER}
 ENTRYPOINT nohup code-server --bind-addr 0.0.0.0:8080 --auth password  ${WORKDIR}
-###
