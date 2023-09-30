@@ -7,24 +7,8 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-### Git
-# Git 설치
-RUN apt-get install -y git
-
 ENV WORKDIR="/app/git_repository"
-
-# 작업 디렉토리 설정
-WORKDIR /app
-
-# Git 저장소 업데이트 스크립트 추가
-COPY update_git_repo.sh /app/update_git_repo.sh
-
-# 스크립트 실행 권한 부여
-RUN chmod +x /app/update_git_repo.sh
-
-# 컨테이너 실행 시 스크립트 자동 실행 설정
-CMD ["/app/update_git_repo.sh"]
-###
+RUN mkdir -p ${WORKDIR}
 
 ### VSCode
 # 새로운 사용자 생성 및 비밀번호 설정
@@ -42,6 +26,25 @@ RUN curl -fsSL https://code-server.dev/install.sh | sh && \
     rm -rf ${WORKINGDIR}/.local ${WORKINGDIR}/.cache
 ###
 
+### Git
+# Git 설치
+RUN apt-get install -y git
+
+# 작업 디렉토리 설정
+WORKDIR /app
+
+# Git 저장소 업데이트 스크립트 추가
+COPY update_git_repo.sh /app/update_git_repo.sh
+
+# 스크립트 실행 권한 부여
+RUN chmod +x /app/update_git_repo.sh
+###
+
+# 작업 디렉토리 내에서 사용자 쓰기 권한 부여
+RUN chown -R ${USER}:${USER} ${WORKDIR}
+# 작업 디렉토리 내의 모든 하위 폴더에 대해 실행 권한 추가
+RUN find ${WORKDIR} -type d -exec chmod +x {} \;
+
 # code-server 시작
 USER ${USER}
-ENTRYPOINT nohup code-server --bind-addr 0.0.0.0:8080 --auth password  ${WORKDIR}
+ENTRYPOINT /app/update_git_repo.sh & nohup code-server --bind-addr 0.0.0.0:8080 --auth password  ${WORKDIR}
