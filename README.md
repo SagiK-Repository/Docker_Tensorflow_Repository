@@ -91,4 +91,7 @@
   docker build -t tensorflow_gpu_vscode_gitrepo_iamge .
   docker run -it --gpus all --name tensorflow_gpu_vscode_gitrepo -p 18081:8080 -d tensorflow_gpu_vscode_gitrepo_iamge:latest 
   ```
-- 다음과 같이 화면을 통해 git에서 받은 내용을 확인할 수 있습니다.
+- 다음과 같이 화면을 통해 git에서 받은 내용을 확인할 수 있습니다.  
+  ![image](https://github.com/SagiK-Repository/Docker_Tensorflow_Repository/assets/66783849/a0fbb261-4283-42d3-86c8-a6a0fae81699)  
+  ![image](https://github.com/SagiK-Repository/Docker_Tensorflow_Repository/assets/66783849/593b3df3-cc25-4946-9de0-7a1e649700fe)
+
