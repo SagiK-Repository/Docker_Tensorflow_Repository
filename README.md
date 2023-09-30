@@ -28,89 +28,67 @@
 
 - dockerfile 내용
   ```dockerfile
-  # 기반이 될 이미지 선택 (이름 획득 : https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tensorflow)
-  FROM nvcr.io/nvidia/tensorflow:23.08-tf2-py3
-  
-  # 필요한 패키지 설치, cache 비우기
-  RUN apt-get update && \
-      apt-get install -y curl sudo && \
-      apt-get clean && \
-      rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-  
-  ### Git
-  # Git 설치
-  RUN apt-get update && apt-get install -y git
-  
-  # 작업 디렉토리 설정
-  WORKDIR /app
-  
-  # Git 저장소 업데이트 스크립트 추가
-  COPY update_git_repo.sh /app/update_git_repo.sh
-  
-  # 스크립트 실행 권한 부여
-  RUN chmod +x /app/update_git_repo.sh
-  
-  # 컨테이너 실행 시 스크립트 자동 실행 설정
-  CMD ["/app/update_git_repo.sh"]
-  
-  ENV WORKDIR="/app/git_repository"
-  ###
-  
-  ### VSCode
-  # 새로운 사용자 생성 및 비밀번호 설정
-  ENV USER="user" \
-      PASSWORD="password"
-  RUN useradd -m ${USER} && echo "${USER}:${PASSWORD}" | chpasswd && adduser ${USER} sudo && \
-      sed -i "/^root/ c\root:!:18291:0:99999:7:::" /etc/shadow
-  
-  # code-server 설치 및 세팅
-  ENV WORKINGDIR="/home/${USER}/vscode"
-  RUN curl -fsSL https://code-server.dev/install.sh | sh && \
-      mkdir ${WORKINGDIR} && \
-      su ${USER} -c "code-server --install-extension ms-python.python \
-                                 --install-extension ms-azuretools.vscode-docker" && \
-      rm -rf ${WORKINGDIR}/.local ${WORKINGDIR}/.cache
-  
-  # code-server 시작
-  USER ${USER}
-  ENTRYPOINT nohup code-server --bind-addr 0.0.0.0:8080 --auth password  ${WORKDIR}
-  ###
+    # 기반이 될 이미지 선택 (이름 획득 : https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tensorflow)
+    FROM nvcr.io/nvidia/tensorflow:23.08-tf2-py3
+
+    # 필요한 패키지 설치, cache 비우기
+    RUN apt-get update && \
+        apt-get install -y curl sudo && \
+        apt-get clean && \
+        rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+    ENV WORKDIR="/app/git_repository"
+    RUN mkdir -p ${WORKDIR}
+
+    ### VSCode
+    # 새로운 사용자 생성 및 비밀번호 설정
+    ENV USER="user" \
+        PASSWORD="password"
+    RUN useradd -m ${USER} && echo "${USER}:${PASSWORD}" | chpasswd && adduser ${USER} sudo && \
+        sed -i "/^root/ c\root:!:18291:0:99999:7:::" /etc/shadow
+
+    # code-server 설치 및 세팅
+    ENV WORKINGDIR="/home/${USER}/vscode"
+    RUN curl -fsSL https://code-server.dev/install.sh | sh && \
+        mkdir ${WORKINGDIR} && \
+        su ${USER} -c "code-server --install-extension ms-python.python \
+                                --install-extension ms-azuretools.vscode-docker" && \
+        rm -rf ${WORKINGDIR}/.local ${WORKINGDIR}/.cache
+    ###
+
+    ### Git
+    # Git 설치
+    RUN apt-get install -y git
+
+    # 작업 디렉토리 설정
+    WORKDIR /app
+
+    # Git 저장소 업데이트 스크립트 추가
+    COPY update_git_repo.sh /app/update_git_repo.sh
+
+    # 스크립트 실행 권한 부여
+    RUN chmod +x /app/update_git_repo.sh
+    ###
+
+    # 작업 디렉토리 내에서 사용자 쓰기 권한 부여
+    RUN chown -R ${USER}:${USER} ${WORKDIR}
+    # 작업 디렉토리 내의 모든 하위 폴더에 대해 실행 권한 추가
+    RUN find ${WORKDIR} -type d -exec chmod +x {} \;
+
+    # code-server 시작
+    USER ${USER}
+    ENTRYPOINT /app/update_git_repo.sh & nohup code-server --bind-addr 0.0.0.0:8080 --auth password  ${WORKDIR}
   ```
 - docker vscode 추가 내용은 (https://github.com/SagiK-Repository/Docker_VSCode/blob/main/README.md)를 참고했습니다.
 - `update_git_repo.sh` 구성
   ```bash
-  # Git 저장소 클론 또는 업데이트
-  if [ -d "/app/git_repository" ]; then
-    # 이미 저장소가 존재하는 경우, Pull 수행
-    cd /app/git_repository
-    git pull origin master
-  else
-    # 저장소가 없는 경우, 클론 수행
-    git clone https://github.com/SagiK-Repository/Docker_Tensorflow_Repository.git /app/git_repository
-  fi
+  #!/bin/bash
+  
+  git clone https://github.com/SagiK-Repository/Docker_Tensorflow_Repository.git /app/git_repository
   ```
 - 다음과 같이 docker를 준비합니다.
   ```bash
   docker build -t tensorflow_gpu_vscode_gitrepo_iamge .
-  docker run --gpus all --name tensorflow_gpu_vscode_gitrepo -p 18081:8080 tensorflow_gpu_vscode_gitrepo_iamge:latest 
+  docker run -it --gpus all --name tensorflow_gpu_vscode_gitrepo -p 18081:8080 -d tensorflow_gpu_vscode_gitrepo_iamge:latest 
   ```
-
-### Nvidia Tool kit 설치
-- 만일 위 과정에서 다음과 같은 에러가 나타났다면, 아래를 따릅니다. (Window에 경우 Ubuntu 또는 WSL에 접근해서 실행합니다)
-  ```log
-  docker run --gpus all --name tensorflow_gpu_vscode_gitrepo -p 18081:8080 juhyung1021/tensorflow_gpu_vscode_gitrepo_images:latest
-  docker: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: error running hook #0: error running hook: exit status 1, stdout: , stderr: Auto-detected mode as 'legacy'
-  nvidia-container-cli: requirement error: unsatisfied condition: cuda>=11.8, please update your driver to a newer version, or use an earlier cuda container: unknown.
-  ```
-- [Enabling the Docker Repository and Installing the NVIDIA Container Toolkit](https://docs.nvidia.com/ai-enterprise/deployment-guide-vmware/0.1.0/docker.html#enabling-the-docker-repository-and-installing-the-nvidia-container-toolkit)의 과정을 따릅니다.  
-  ```bash
-  distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
-  curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
-  curl -s -L https://nvidia.github.io/libnvidia-container/$distribution/libnvidia-container.list | \
-       sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
-       sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
-  ```
-  ```bash
-  sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
-  sudo systemctl restart docker
-  ```
+- 다음과 같이 화면을 통해 git에서 받은 내용을 확인할 수 있습니다.
