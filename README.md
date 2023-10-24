@@ -4,7 +4,11 @@
 
 ### 바로 사용하기
 ```bash
-docker run -it --gpus all --name tensorflow_gpu_vscode_gitrepo -p 18081:8080 -d tensorflow_gpu_vscode_gitrepo_iamge:latest 
+docker run -it --gpus all --name tensorflow_gpu_vscode_gitrepo -p 18081:8080 -d juhyung1021/tensorflow_gpu_vscode_gitrepo_iamge:latest
+
+# or
+
+nvidia-docker run -it --name nvcr.io/nvidia/j7j/dcgm-exporter:3.2.5-3.1.7-ubuntu20.04 -p 18081:8080 -d juhyung1021/tensorflow_gpu_vscode_gitrepo_iamge:latest 
 ```
 
 <br>
