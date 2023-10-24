@@ -2,6 +2,13 @@
 
 <br>
 
+### 바로 사용하기
+```bash
+docker run -it --gpus all --name tensorflow_gpu_vscode_gitrepo -p 18081:8080 -d tensorflow_gpu_vscode_gitrepo_iamge:latest 
+```
+
+<br>
+
 # Docker_Tensorflow_Repository
 
   
